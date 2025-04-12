@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-app-deployment
+  namespace: dev
+spec:
+  replicas: 2  # Garantindo que 2 pods sejam criados no cluster
+  selector:
+    matchLabels:
+      app: my-app
+  template:
+    metadata:
+      labels:
+        app: my-app
+    spec:
+      containers:
+      - name: my-app-container
+        image: marquesmarcelo/my-app.localhost:latest  # Usando uma imagem com uma aplicação simples
+        env:
+        - name: CONTAINER_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name  # Variável de ambiente com o nome do pod
+        ports:
+        - containerPort: 80  # A aplicação vai rodar na porta 80

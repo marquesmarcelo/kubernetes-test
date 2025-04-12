@@ -1,0 +1,20 @@
+image: docker:latest
+
+services:
+  - docker:dind
+
+stages:
+  - build
+  - deploy
+
+variables:
+  DOCKER_TLS_CERTDIR: ""
+
+before_script:
+  - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN registry.gitlab.local
+
+build:
+  stage: build
+  script:
+    - docker build -t registry.gitlab.local/gitlab-instance/myapp:latest .
+    - docker push registry.gitlab.local/gitlab-instance/myapp:latest

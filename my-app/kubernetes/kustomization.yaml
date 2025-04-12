@@ -1,0 +1,5 @@
+resources:
+  - namespace.yaml
+  - deployment.yaml  # Deployment da aplicação
+  - service.yaml  # Service da aplicação
+  - ingress.yaml  # Ingress da aplicação
