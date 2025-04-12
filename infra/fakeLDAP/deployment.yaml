@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fakedldap
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fakedldap
+  template:
+    metadata:
+      labels:
+        app: fakedldap
+    spec:
+      containers:
+      - name: fakedldap
+        image: seu-usuario/fakedldap:latest # Substitua com sua imagem Docker
+        ports:
+        - containerPort: 1389
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fakedldap
+  namespace: default
+spec:
+  ports:
+    - port: 1389
+      targetPort: 1389
+  selector:
+    app: fakedldap

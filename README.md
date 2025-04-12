@@ -115,3 +115,27 @@ docker push marquesmarcelo/my-app.localhost:latest
 kubectl apply -k my-app/kubernetes
 ```
 
+# Gerar os certificados digitais
+
+1. Gerar um certificado digital autoassinado
+
+```bash
+openssl req -x509 -nodes -days 365 \
+  -newkey rsa:2048 \
+  -keyout tls.key \
+  -out tls.crt \
+  -subj "/CN=argocd.localhost/O=MinhaEmpresa"
+```
+
+2. Criar um Secret TLS no Kubernetes
+
+Depois de gerar os arquivos, crie um Secret com tipo TLS:
+
+```bash
+kubectl create secret tls meu-certificado-tls \
+  --cert=tls.crt \
+  --key=tls.key \
+  -n NAMESPACE
+```
+
+Substitua NAMESPACE pelo namespace do seu app, como argocd, sonarqube, etc.

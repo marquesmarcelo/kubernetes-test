@@ -1,0 +1,62 @@
+server:
+  ingress:
+    enabled: true                     # Habilita o Ingress
+    name: argocd-ingress              # Nome do Ingress
+    annotations:                       
+      nginx.ingress.kubernetes.io/rewrite-target: /
+    hosts:
+      - argocd.local                  # Nome do domínio para o Argo CD
+    tls:                               # Configuração de TLS (HTTPS)
+      - hosts:
+          - argocd.local               # Domínio para usar HTTPS
+        secretName: argocd-ingress-tls-secret  # Nome do Secret com o certificado TLS
+  # Configuração de SMTP para envio de e-mails
+  smtp:
+    enabled: true                      # Ativar o envio de e-mails
+    server: smtp.example.com            # Servidor SMTP
+    port: 587                           # Porta do servidor SMTP
+    sender: "argocd@example.com"        # Endereço de envio
+    username: "smtp_user"               # Usuário do SMTP
+    password: "smtp_password"           # Senha do SMTP
+    from: "argocd@example.com"          # Endereço "from" para o envio de e-mails
+    tls: true                           # Ativar TLS para SMTP
+
+# Configuração de integração com o LDAP (Active Directory)
+dex:
+  enabled: true                        # Habilita o Dex (Autenticação com LDAP)
+  openid:
+    clientID: argocd                   # ID do cliente
+    clientSecret: "argocd_secret"      # Secret do cliente
+    redirectURI: "https://argocd.local/api/dex/callback"  # URL de redirecionamento após login
+
+ldap:
+  enabled: true
+  url: "ldap://ldap.example.com"       # URL do servidor LDAP (Active Directory)
+  bindDN: "CN=binduser,CN=Users,DC=example,DC=com"  # DN para bind no LDAP
+  bindPW: "your_password"              # Senha para bind
+  userSearch:
+    baseDN: "CN=Users,DC=example,DC=com"  # Base DN para busca de usuários
+    filter: "(sAMAccountName={0})"      # Filtro para busca do usuário
+  groupSearch:
+    baseDN: "CN=Groups,DC=example,DC=com" # Base DN para grupos
+    filter: "(member={0})"              # Filtro para buscar grupos do usuário
+  group:
+    # Permissões de grupo para o Argo CD
+    groups:
+      - "cn=argocd-admins,cn=Users,dc=example,dc=com"   # Grupo de administradores
+      - "cn=argocd-users,cn=Users,dc=example,dc=com"    # Grupo de usuários
+  user:
+    usernameAttribute: "sAMAccountName"  # Atributo para nome de usuário
+    emailAttribute: "mail"              # Atributo para e-mail
+
+# Configuração de configurações adicionais do Argo CD
+config:
+  repositories:
+    - name: example-repo
+      url: https://github.com/your/repository
+      type: git
+      username: gituser
+      password: gitpassword
+  rbac:
+    policy:
+      - p, role:admin, applications, *, */*, allow   # Exemplo de política RBAC (role de admin)
