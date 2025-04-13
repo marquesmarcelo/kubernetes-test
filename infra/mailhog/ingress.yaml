@@ -1,20 +1,20 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: my-app-ingress
-  namespace: dev
+  name: mailhog-ingress
+  namespace: mailhog
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
   ingressClassName: nginx # deve bater com o IngressClass que o Ingress Controller do NGINX está usando. Veja com: kubectl get ingressclass
   rules:
-  - host: my-app.localhost  # O domínio que você usará para acessar a app
+  - host: mailhog.localhost  # O domínio que você usará para acessar a app
     http:
       paths:
       - path: /
         pathType: Prefix
         backend:
           service:
-            name: my-app-service
+            name: mailhog
             port:
-              number: 80  # Porta do serviço exposto
+              number: 8025  # Porta do serviço exposto

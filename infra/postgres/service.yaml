@@ -2,9 +2,9 @@ apiVersion: v1
 kind: Service
 metadata:
   name: postgres
-  namespace: db
 spec:
-  type: NodePort
+  #type: NodePort   # <<<<<< ALTERADO AQUI
+  type: ClusterIP 
   selector:
     app: postgres
   ports:
@@ -12,4 +12,4 @@ spec:
       protocol: TCP 
       port: 5432 # Porta exposta internamente no Cluster (para outros serviços)
       targetPort: 5432 # Porta no container (onde o Postgres realmente escuta)
-      nodePort: 30432 # Porta exposta externamente no Node (acesso de fora do cluster)
+      #nodePort: 30432 # Porta exposta externamente no Node (acesso de fora do cluster)

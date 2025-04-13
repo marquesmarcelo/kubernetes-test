@@ -29,6 +29,12 @@ curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stabl
 sudo install -o root -g root -m 0755 kubectl /usr/local/sbin/kubectl
 ```
 
+3. Instalar componentes do kubernetes
+```bash
+snap install helm --classic
+snap install kustomize
+```
+
 # Iniciando a configuração da Infra
 
 ## Criando o cluster com o kind
@@ -36,6 +42,8 @@ sudo install -o root -g root -m 0755 kubectl /usr/local/sbin/kubectl
 1. Criar o Cluster com kind
 
 ```bash
+mkdir -p /kind-data
+
 kind create cluster --config ./infra/kind/cluster.yaml
 ```
 
@@ -46,10 +54,15 @@ kubectl cluster-info --context kind-kdev
 kubectl get nodes
 ```
 
-3. Instalar o Ingress Controller (nginx)
+3. Instalar o Ingress Controller (nginx) usando o helm e o values.yaml
 
 ```bash
-kubectl apply -k infra/ingress-nginx
+helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+helm repo update
+
+helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx \
+  --namespace ingress-nginx --create-namespace \
+  -f infra/ingress-nginx-helm/values.yaml
 ```
 
 4. Espere o pod ingress-nginx-controller ficar Running:

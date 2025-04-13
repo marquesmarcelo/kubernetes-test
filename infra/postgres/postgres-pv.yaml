@@ -3,10 +3,14 @@ kind: PersistentVolume
 metadata:
   name: postgres-pv  
   namespace: db
+  labels:
+    app: postgres
 spec:
   capacity:
     storage: 10Gi
   accessModes:
     - ReadWriteOnce
+  storageClassName: "postgres"  
   hostPath:
-    path: "/data/postgres"
+    path: "/mnt/kind-data"
+    type: DirectoryOrCreate

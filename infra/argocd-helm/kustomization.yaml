@@ -1,15 +1,13 @@
+# kustomization.yaml
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: argocd
 
-resources:
-  - namespace.yaml
-  - deployment.yaml
-
 helmCharts:
-  - name: argo-cd
-    repo: https://argoproj.github.io/argo-helm
-    releaseName: argocd
-    version: 5.51.6
-    namespace: argocd
-    valuesFile: values.yaml
+- name: argo-cd
+  repo: oci://ghcr.io/argoproj/argo-helm
+  version: 7.8.24
+  releaseName: argocd
+  apiVersions:
+  - monitoring.coreos.com/v1
+  valuesFile: my-argocd-values.yaml

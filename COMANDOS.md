@@ -3,7 +3,7 @@
 Forma de acesso ao Argo CD para fins de teste via port-forward:
 
 ```bash
-kubectl port-forward svc/argocd-server -n argocd 8080:443
+kubectl port-forward svc/mailhog -n mailhog 3025:8025 --address 0.0.0.0
 ```
 
 1. Parar o container do cluster Kind

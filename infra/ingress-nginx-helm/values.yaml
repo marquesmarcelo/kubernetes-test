@@ -1,0 +1,17 @@
+controller:
+  ingressClassResource:
+    name: nginx
+  ingressClass: nginx
+
+  service:
+    type: NodePort
+    nodePorts:
+      http: 30080
+      https: 30443
+
+  hostPort:
+    enabled: true
+
+  hostNetwork: true
+
+  kind: DaemonSet
