@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: mailhog
-  namespace: default
+  namespace: mailhog
 spec:
   replicas: 1
   selector:
@@ -19,17 +19,4 @@ spec:
         ports:
         - containerPort: 1025  # Porta do SMTP
         - containerPort: 8025  # Porta da interface web
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: mailhog
-  namespace: default
-spec:
-  ports:
-    - port: 1025
-      targetPort: 1025
-    - port: 8025
-      targetPort: 8025
-  selector:
-    app: mailhog
+        

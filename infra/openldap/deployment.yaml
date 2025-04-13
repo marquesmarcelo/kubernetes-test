@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: openldap
+  namespace: openldap
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: openldap
+  template:
+    metadata:
+      labels:
+        app: openldap
+    spec:
+      containers:
+        - name: openldap
+          image: bitnami/openldap:2
+          ports:
+            - containerPort: 1389
+            - containerPort: 1636
+          env:
+            - name: LDAP_ADMIN_USERNAME
+              value: "admin"
+            - name: LDAP_ADMIN_PASSWORD
+              value: "adminpassword"
+            - name: LDAP_USERS
+              value: "user01,user02"
+            - name: LDAP_PASSWORDS
+              value: "password1,password2"
+            - name: LDAP_ROOT
+              value: "dc=company,dc=intnet"
+            - name: LDAP_ADMIN_DN
+              value: "cn=admin,dc=company,dc=intnet"
+          volumeMounts:
+            - name: openldap-storage
+              mountPath: /bitnami/openldap
+      volumes:
+        - name: openldap-storage
+          persistentVolumeClaim:
+            claimName: openldap-pvc

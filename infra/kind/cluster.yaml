@@ -8,6 +8,17 @@ nodes:
         hostPort: 8080
       - containerPort: 443
         hostPort: 8443
+      #- containerPort: 5432  # A porta do PostgreSQL dentro do container
+      #  hostPort: 30432  # Porta externa do host
+      #- containerPort: 1025  # A do SMTP do Maildog
+      #  hostPort: 31025
+      #- containerPort: 8025  # A porta da interface Web do Maildog
+      #  hostPort: 30025
+      #- containerPort: 1389
+      #  hostPort: 31389
+      #- containerPort: 1636
+      #  hostPort: 31636
+      
     kubeadmConfigPatches:
       - |
         kind: InitConfiguration

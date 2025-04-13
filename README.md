@@ -1,4 +1,4 @@
-# Projeto Teste para o Kubernetes
+# Preparação da máquina de desenvolvimento
 
 ## Instalação do Docker no WSL
 
@@ -28,6 +28,9 @@ curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stabl
 
 sudo install -o root -g root -m 0755 kubectl /usr/local/sbin/kubectl
 ```
+
+# Iniciando a configuração da Infra
+
 ## Criando o cluster com o kind
 
 1. Criar o Cluster com kind
@@ -56,6 +59,16 @@ kubectl wait --namespace ingress-nginx \
   --for=condition=Ready pod \
   --selector=app.kubernetes.io/component=controller \
   --timeout=90s
+```
+
+## Configurando o postgres
+
+O objetivo é ter um postgres externo para todos os PODs
+
+1. Instalando o postgres
+
+```bash
+kubectl apply -k infra/argocd
 ```
 
 # Instalando o Argo CD
