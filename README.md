@@ -35,6 +35,13 @@ snap install helm --classic
 snap install kustomize
 ```
 
+4. Conversor de docker-compose para kubernets
+
+```bash
+curl -L https://github.com/kubernetes/kompose/releases/download/v1.35.0/kompose-linux-amd64 -o /usr/local/sbin/kompose
+chmod +x /usr/local/sbin/kompose
+```
+
 # Iniciando a configuração da Infra
 
 ## Criando o cluster com o kind
