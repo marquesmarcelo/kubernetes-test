@@ -1,32 +1,37 @@
-# Configuração do SonarQube
 sonarqube:
+  # Configuração do banco de dados PostgreSQL
+  sonarProperties:
+    sonar.jdbc.url: "jdbc:postgresql://postgres.db.svc.cluster.local:5432/sonarqube"
+    sonar.jdbc.username: "postgres"
+    sonar.jdbc.password: "admin123"
+
   # Configuração de LDAP para Active Directory
   ldap:
     enabled: true
-    url: "ldap://ldap.example.com"  # URL do seu servidor LDAP
-    bindDN: "CN=binduser,CN=Users,DC=example,DC=com"  # DN do usuário para bind no LDAP
-    bindPW: "your_password"  # Senha para bind
+    url: "ldap://openldap.openldap.svc.cluster.local:1389"
+    bindDN: "cn=admin,dc=company,dc=intnet"
+    bindPW: "admin123"
     userSearch:
-      baseDN: "CN=Users,DC=example,DC=com"  # Base DN para busca de usuários
-      filter: "(sAMAccountName={0})"  # Filtro para buscar o usuário
+      baseDN: "ou=users,dc=company,dc=intnet"
+      filter: "(uid={0})"
     groupSearch:
-      baseDN: "CN=Groups,DC=example,DC=com"  # Base DN para grupos
-      filter: "(member={0})"  # Filtro para buscar grupos
+      baseDN: "ou=groups,dc=company,dc=intnet"
+      filter: "(member={0})"
     group:
       groups:
-        - "cn=sonarqube-admins,cn=Users,dc=example,dc=com"  # Administradores do SonarQube
-        - "cn=sonarqube-users,cn=Users,dc=example,dc=com"   # Usuários do SonarQube
+        - "cn=sonarqube-admins,ou=groups,dc=company,dc=intnet"
+        - "cn=sonarqube-users,ou=groups,dc=company,dc=intnet"
 
   # Configuração de SMTP para envio de e-mails
   smtp:
     enabled: true
-    server: "smtp.example.com"  # Servidor SMTP para envio de e-mails
-    port: 587  # Porta do SMTP (use 465 para SSL)
-    sender: "sonarqube@example.com"  # E-mail do remetente
-    username: "smtp_user"  # Usuário SMTP
-    password: "smtp_password"  # Senha do SMTP
-    from: "sonarqube@example.com"  # E-mail do remetente
-    tls: true  # Ativa o uso de TLS
+    server: "smtp.example.com"
+    port: 587
+    sender: "sonarqube@example.com"
+    username: "smtp_user"
+    password: "smtp_password"
+    from: "sonarqube@example.com"
+    tls: true
 
   # Configuração de Certificado Digital (TLS) para o Ingress
   ingress:
@@ -35,25 +40,33 @@ sonarqube:
     annotations:
       nginx.ingress.kubernetes.io/rewrite-target: "/"
     hosts:
-      - "sonarqube.example.com"  # Domínio do SonarQube
+      - "sonarqube.localhost"
     tls:
       - hosts:
-          - "sonarqube.example.com"  # Nome do domínio para TLS
-        secretName: sonarqube-ingress-tls-secret  # Nome do Secret com o certificado digital
+          - "sonarqube.localhost"
+        secretName: sonarqube-ingress-tls-secret
 
-# Configuração de persistência (opcional, se você quiser persistir os dados do SonarQube)
-persistence:
-  enabled: true
-  size: 10Gi  # Tamanho do volume persistente para o banco de dados do SonarQube
+  # Configuração de banco de dados externo (PostgreSQL)
+  postgresql:
+    enabled: false
 
-# Configuração de recursos do Kubernetes
-resources:
-  requests:
-    memory: "1Gi"
-    cpu: "1"
-  limits:
-    memory: "4Gi"
-    cpu: "2"
+  # Configuração de passcode para monitoramento
+  monitoringPasscode: "your-monitoring-passcode"  # Ou, alternativamente:
+  # monitoringPasscodeSecretName: "sonarqube-monitoring-secret"
+  # monitoringPasscodeSecretKey: "monitoringPasscode"
 
-# Configuração do namespace para o SonarQube
+  # Persistência de dados
+  persistence:
+    enabled: true
+    size: 10Gi
+
+  # Recursos do Kubernetes
+  resources:
+    requests:
+      memory: "1Gi"
+      cpu: "1"
+    limits:
+      memory: "4Gi"
+      cpu: "2"
+
 namespace: sonarqube

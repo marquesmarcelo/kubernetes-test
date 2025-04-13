@@ -1,28 +1,55 @@
-3. Passos para Aplicar a Configuração
-Ingress Controller: Certifique-se de que o Ingress Controller esteja corretamente configurado no seu cluster (por exemplo, o NGINX Ingress). Caso contrário, o SonarQube não conseguirá expor os serviços para fora do cluster Kubernetes.
 
-Criar o Secret com o Certificado Digital: Se você já tem um certificado TLS para o SonarQube, você pode criar um Secret para armazená-lo no Kubernetes:
 
-bash
-Copiar
-Editar
-kubectl create secret tls sonarqube-ingress-tls-secret \
-  --cert=/path/to/cert.crt \
-  --key=/path/to/cert.key \
-  --namespace sonarqube
-Isso cria um Secret no namespace sonarqube com o certificado e chave privada.
+Adicionar o repositório do Helm do SonarQube:
 
-Aplicar a Configuração com Kustomize: Agora, com o arquivo kustomization.yaml e values.yaml configurados, você pode aplicar os recursos com o comando:
+Primeiro, adicione o repositório oficial do Helm para o SonarQube:
 
-bash
-Copiar
-Editar
-kubectl apply -k ./path/to/your/kustomize/directory
-Este comando aplicará as configurações e instalará o SonarQube com as integrações configuradas.
+```bash
+helm repo add sonarqube https://SonarSource.github.io/helm-chart-sonarqube
+helm repo update
+```
 
-4. Testar a Integração
-LDAP (Active Directory): Após a instalação, você pode verificar se a autenticação via LDAP está funcionando ao tentar fazer login com um usuário do Active Directory.
+Instalar o SonarQube com Helm:
 
-SMTP: Verifique se o envio de e-mails está funcionando corretamente. Isso pode ser feito, por exemplo, testando a recuperação de senha ou o envio de alertas.
+Agora, você pode instalar o SonarQube em seu cluster Kubernetes. Crie um namespace sonarqube (caso ainda não tenha):
 
-Ingress/TLS: O SonarQube deve estar acessível via https://sonarqube.example.com, com um certificado TLS configurado corretamente.
+```bash
+kubectl create namespace sonarqube
+```
+
+
+Passos complementares
+Atualize seu /etc/hosts local (ou equivalente no Windows):
+
+```bash
+127.0.0.1 sonarqube.localhost
+```
+
+(Opcional) Gerar um certificado self-signed para teste:
+
+```bash
+kubectl create namespace sonarqube
+
+mkdir -p infra/sonarqube-helm/tls
+
+openssl req -x509 -nodes -days 3650 -newkey rsa:2048 \
+  -out infra/sonarqube-helm/tls/tls.crt -keyout infra/sonarqube-helm/tls/tls.key \
+  -subj "/CN=sonarqube.localhost/O=SonarQube"
+
+kubectl create secret tls sonarqube-tls \
+  --key infra/sonarqube-helm/tls/tls.key --cert infra/sonarqube-helm/tls/tls.crt \
+  -n sonarqube
+```
+
+
+```bash
+helm upgrade --install sonarqube sonarqube/sonarqube -n sonarqube --create-namespace -f path/to/your/values.yaml --set community.enabled=true,monitoringPasscode=admin123
+```
+
+
+Usuário e senha padrão
+
+```bash
+admin
+admin
+```

@@ -1,7 +1,0 @@
-helmCharts:
-  - name: sonarqube
-    version: "10.0.0"  # Substitua pela versão que você deseja usar
-    repository: "https://SonarSource.github.io/helm-chart-sonarqube"  # Repositório do Helm para SonarQube
-    releaseName: sonarqube
-    namespace: sonarqube
-    valuesFile: values.yaml  # Referência ao arquivo values.yaml configurado
