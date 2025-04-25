@@ -5,6 +5,6 @@ WORKDIR /app
 RUN mkdir -p /app/info
 COPY environment-info.txt /app/info/environment-info.txt
 
-COPY . .
+COPY . /app
 RUN npm install express
-CMD ["node", "index.js"]
+CMD ["node", "/app/index.js"]

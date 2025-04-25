@@ -7,7 +7,7 @@ app.get("/", (req, res) => {
   const id = fs.readFileSync("/etc/hostname", "utf8");
   
   // Ler o arquivo environment-info.txt
-  const envInfo = fs.readFileSync(path.join(__dirname, 'info', 'environment-info.txt'), 'utf8');
+  const envInfo = fs.readFileSync(path.join(__dirname, 'info', '/app/info/environment-info.txt'), 'utf8');
 
   res.send(`
     <h1>Hello from container ${id}</h1>
