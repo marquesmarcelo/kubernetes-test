@@ -22,7 +22,7 @@ variables:
   SONAR_APP_NAME: $APP_NAME-$ENVIRONMENT # criar no sonnarqube dois projetos.. Um chamado $APP_NAME-main e outro $APP_NAME-hml
 
   # ARGOCD_TOKEN deve ser configurado no gitlab
-  ARGOCD_HOST_URL: "https://argocd.example.com"
+  ARGOCD_HOST_URL: "https://your-argocd-url"
 
 before_script:
   # Definindo o nome do ambiente com base na branch
