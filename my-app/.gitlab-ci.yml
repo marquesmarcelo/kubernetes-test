@@ -1,20 +1,164 @@
-image: docker:latest
-
-services:
-  - docker:dind
-
 stages:
+  - validate
   - build
   - deploy
 
 variables:
-  DOCKER_TLS_CERTDIR: ""
+  APP_NAME: my-app 
+  CHART_PATH: infra/charts/app
+  ENVIRONMENT: $CI_COMMIT_BRANCH  
+  ENV_DIR: "" # Variável a ser preenchida no before_script
+  IMAGE_TAG: "" # Variável a ser preenchida no before_script
+  VERSION: "" # Variável a ser preenchida no before_script
+
+  # DOCKER_LOGIN e DOCKER_PASSWORD deve ser configurado no gitlab
+  DOCKER_REGISTRY: docker.io
+  DOCKER_USERNAME: marquesmarcelo  # Seu nome de usuário no Docker Hub
+  DOCKER_IMAGE: "" # Variável a ser preenchida no before_script
+
+  # SONAR_TOKEN deve ser configurado no gitlab
+  SONAR_HOST_URL: "https://your-sonarqube-url"  # URL do servidor SonarQube
+  SONAR_SOURCES: "."  # Diretório das fontes (substitua conforme necessário)
+  SONAR_APP_NAME: $APP_NAME-$ENVIRONMENT # criar no sonnarqube dois projetos.. Um chamado $APP_NAME-main e outro $APP_NAME-hml
+
+  # ARGOCD_TOKEN deve ser configurado no gitlab
+  ARGOCD_HOST_URL: "https://your-argocd-url"
 
 before_script:
-  - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN registry.gitlab.local
+  # Definindo o nome do ambiente com base na branch
+  - |
+    case "$CI_COMMIT_BRANCH" in
+      main) ENV_DIR="main" ;;
+      hml) ENV_DIR="hml" ;;
+      *test*) ENV_DIR="test" ;;  # Qualquer branch que tenha "test" no nome
+      *) echo "Branch não configurada para deploy. Só podem ser executados deploys nas branch main, hml e qualquer branch que contenha a palavra test" && exit 1 ;;
+    esac
 
-build:
-  stage: build
+  # Exportando a variável ENV_DIR para uso nos estágios seguintes
+  - export ENV_DIR
+
+  # Definindo a tag da imagem
+  - |
+    if [[ -z "$CI_COMMIT_TAG" ]]; then
+      echo "Nenhuma tag configurada no commit. O pipeline será interrompido."
+      exit 1  # Interrompe o pipeline se não houver tag
+    else
+      VERSION="${CI_COMMIT_BRANCH}-${CI_COMMIT_TAG}"
+      IMAGE_TAG="${APP_NAME}-${VERSION}"      
+    fi
+
+  # Exportando a variável VERSION e IMAGE_TAG para uso nos estágios seguintes
+  - export VERSION
+  - export IMAGE_TAG
+  - export DOCKER_IMAGE="$DOCKER_REGISTRY/$DOCKER_USERNAME/$IMAGE_TAG"
+
+  # Atualizar o arquivo environment-info.txt com informações sobre o ambiente, tag, e versão
+  - echo "App: $APP_NAME" > environment-info.txt
+  - echo "Ambiente: $CI_COMMIT_BRANCH" >> environment-info.txt
+  - echo "Versão: $VERSION" >> environment-info.txt
+  - cat environment-info.txt  # Verifica se o arquivo foi gerado corretamente
+
+# Valida com SonarQube apenas nas branches (hml) homologacao ou main (producao)
+sonarqube-check:
+  image: sonarsource/sonar-scanner-cli:latest
+  stage: validate
   script:
-    - docker build -t registry.gitlab.local/gitlab-instance/myapp:latest .
-    - docker push registry.gitlab.local/gitlab-instance/myapp:latest
+    - sonar-scanner \
+        -Dsonar.projectKey=$APP_NAME-$ENVIRONMENT \ 
+        -Dsonar.sources=$SONAR_SOURCES \
+        -Dsonar.host.url=$SONAR_HOST_URL \
+        -Dsonar.login=$SONAR_TOKEN  # Usando o token de autenticação aqui
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "hml" || $CI_COMMIT_BRANCH == "main"'
+
+sonarqube-quality-gate:
+  image: curlimages/curl:latest  # A imagem pode não ter o jq. Considere usar outra imagem ou adicionar o jq.
+  stage: validate
+  script:
+    - |
+      # Espera para garantir que o Sonar terminou de processar
+      sleep 15
+      ANALYSIS_ID=$(curl -s -u $SONAR_TOKEN: "$SONAR_HOST_URL/api/ce/component?componentKey=$SONAR_APP_NAME" | jq -r '.queue[0].id')
+      
+      STATUS="PENDING"
+      while [ "$STATUS" != "SUCCESS" ]; do
+        STATUS=$(curl -s -u $SONAR_TOKEN: "$SONAR_HOST_URL/api/ce/task?id=$ANALYSIS_ID" | jq -r '.task.status')
+        echo "Aguardando análise... STATUS=$STATUS"
+        sleep 3
+      done
+
+      GATE_STATUS=$(curl -s -u $SONAR_TOKEN: "$SONAR_HOST_URL/api/qualitygates/project_status?projectKey=$SONAR_APP_NAME" | jq -r '.projectStatus.status')
+      
+      echo "Quality Gate Status: $GATE_STATUS"
+      if [ "$GATE_STATUS" != "OK" ]; then
+        echo "Quality Gate falhou!"
+        exit 1
+      fi
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+      when: always
+    - when: never
+
+build-image:
+  stage: build
+  image: docker:latest
+  services:
+    - docker:dind
+  script:
+    - docker login -u $DOCKER_USER -p $DOCKER_PASSWORD $DOCKER_REGISTRY  # Login no Docker Registry
+    - docker build -t $DOCKER_IMAGE .  # Constrói a imagem Docker
+    - docker push $DOCKER_IMAGE  # Empurra a imagem para o Docker Registry
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "hml" || $CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH =~ /test/'
+
+update-chart-and-values:
+  stage: build
+  image: alpine/git
+  script:
+    # Atualiza o versionamento do Chart.yaml
+    - sed -i "s/^version:.*/version: ${VERSION#v}/" $CHART_PATH/Chart.yaml
+    - sed -i "s/^appVersion:.*/appVersion: ${VERSION#v}/" $CHART_PATH/Chart.yaml
+    
+    # Adiciona o yq para manipulação de YAML
+    - apk add --no-cache yq
+
+    # Cria o diretório de ambiente, caso não exista
+    - export ENV_DIR="environments/${CI_COMMIT_REF_NAME}"
+    - mkdir -p "$ENV_DIR"
+
+    # Atualiza a tag da imagem no values.yaml do ambiente
+    - yq eval -i ".image.tag = \"$IMAGE_TAG\"" "$ENV_DIR/values.yaml"
+
+    # Realiza o commit com as alterações
+    - git config user.name "CI"
+    - git config user.email "ci@example.com"
+    - git pull origin $CI_COMMIT_REF_NAME  # Garante que o repositório está atualizado
+    - git add "$CHART_PATH/Chart.yaml" "$ENV_DIR/values.yaml"
+    - git commit -m "Atualiza versão e imagem para $IMAGE_TAG"
+    - git push origin $CI_COMMIT_REF_NAME
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "hml" || $CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH =~ /test/'
+
+wait-argocd:
+  stage: deploy
+  image: curlimages/curl
+  script:
+    - |
+      MAX_WAIT_TIME=600
+      WAIT_TIME=0
+      while [[ "$APP_STATUS" != "Healthy" && $WAIT_TIME -lt $MAX_WAIT_TIME ]]; do
+        APP_STATUS=$(curl -s -X GET "$ARGOCD_HOST_URL/api/v1/applications/$APP_NAME/status" -H "Authorization: Bearer $ARGOCD_TOKEN" | jq -r '.status.health.status')
+        if [[ "$APP_STATUS" == "Healthy" ]]; then
+          echo "A aplicação foi publicada com sucesso no ArgoCD."
+          break
+        fi
+        echo "Aguardando a aplicação ser sincronizada..."
+        sleep 15
+        WAIT_TIME=$((WAIT_TIME + 15))
+      done
+      if [[ "$APP_STATUS" != "Healthy" ]]; then
+        echo "Erro: A aplicação não foi publicada com sucesso após $MAX_WAIT_TIME segundos."
+        exit 1
+      fi
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "hml" || $CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH =~ /test/'
