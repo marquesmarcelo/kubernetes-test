@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-app-service
+spec:
+  selector:
+    app: my-app
+  ports:
+    - protocol: TCP
+      port: 80  # Porta do serviço
+      targetPort: 80  # Porta no pod onde o NGINX está ouvindo
+  type: ClusterIP  # Tipo de serviço que expõe a aplicação dentro do cluster

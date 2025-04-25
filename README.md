@@ -153,7 +153,7 @@ kubectl apply -k my-app/kubernetes
 1. Gerar um certificado digital autoassinado
 
 ```bash
-openssl req -x509 -nodes -days 365 \
+openssl req -x509 -nodes -days 3650 \
   -newkey rsa:2048 \
   -keyout tls.key \
   -out tls.crt \

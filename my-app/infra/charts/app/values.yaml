@@ -1,0 +1,7 @@
+image:
+  repository: registry.gitlab.com/nome-usuario/meu-app
+  tag: latest
+
+ingress:
+  enabled: true
+  host: meuapp-hml.minhaempresa.local
