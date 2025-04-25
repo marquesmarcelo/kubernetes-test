@@ -52,12 +52,6 @@ before_script:
   - export IMAGE_TAG
   - export DOCKER_IMAGE="$DOCKER_REGISTRY/$DOCKER_USERNAME/$IMAGE_TAG"
 
-  # Atualizar o arquivo environment-info.txt com informações sobre o ambiente, tag, e versão
-  - echo "App: $APP_NAME" > environment-info.txt
-  - echo "Ambiente: $CI_COMMIT_BRANCH" >> environment-info.txt
-  - echo "Versão: $VERSION" >> environment-info.txt
-  - cat environment-info.txt  # Verifica se o arquivo foi gerado corretamente
-
 # Valida com SonarQube apenas nas branches (hml) homologacao ou main (producao)
 sonarqube-check:
   image: sonarsource/sonar-scanner-cli:latest
@@ -116,9 +110,11 @@ update-chart-and-values:
   image: alpine/git
   script:
     # Atualiza o versionamento do Chart.yaml
+    - sed -i "s/^name:.*/name: ${APP_NAME#v}/" $CHART_PATH/Chart.yaml
     - sed -i "s/^version:.*/version: ${VERSION#v}/" $CHART_PATH/Chart.yaml
     - sed -i "s/^appVersion:.*/appVersion: ${VERSION#v}/" $CHART_PATH/Chart.yaml
-    
+    - sed -i "s/^environment:.*/version: ${ENVIRONMENT#v}/" $CHART_PATH/Chart.yaml
+
     # Adiciona o yq para manipulação de YAML
     - apk add --no-cache yq
 

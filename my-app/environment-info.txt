@@ -1,5 +1,0 @@
-# Arquivo que deve ficar disponível no app para ser consultado e o objetivo é saber se foi publicado a versão desejada
-# Os valores abaixo são para o ambiente local do desenvolvedor
-App: local
-Ambiente: local
-Versão: local

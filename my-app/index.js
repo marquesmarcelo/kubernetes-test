@@ -6,12 +6,12 @@ const app = express();
 app.get("/", (req, res) => {
   const id = fs.readFileSync("/etc/hostname", "utf8");
   
-  // Ler o arquivo environment-info.txt
-  const envInfo = fs.readFileSync(path.join(__dirname, 'info', '/app/info/environment-info.txt'), 'utf8');
+  // Ler o arquivo Chart.yaml
+  const chartInfo = fs.readFileSync(path.join(__dirname, 'info', '/app/info/Chart.yaml'), 'utf8');
 
   res.send(`
     <h1>Hello from container ${id}</h1>
-    <pre>${envInfo}</pre>  <!-- Exibe o conteúdo do environment-info.txt -->
+    <pre>${chartInfo}</pre>  <!-- Exibe o conteúdo do Chart.yaml -->
   `);
 });
 
