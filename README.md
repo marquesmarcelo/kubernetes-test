@@ -31,8 +31,15 @@ sudo install -o root -g root -m 0755 kubectl /usr/local/sbin/kubectl
 
 3. Instalar componentes do kubernetes
 ```bash
-snap install helm --classic
-snap install kustomize
+sudo apt update
+sudo apt install helm -y
+
+cd /tmp
+KUSTOMIZE_VERSION=$(curl -s https://api.github.com/repos/kubernetes-sigs/kustomize/releases/latest | grep tag_name | cut -d '"' -f 4)
+curl -LO https://github.com/kubernetes-sigs/kustomize/releases/download/${KUSTOMIZE_VERSION}/kustomize_${KUSTOMIZE_VERSION#kustomize/}_linux_amd64.tar.gz
+tar -zxvf kustomize_*_linux_amd64.tar.gz
+chmod +x kustomize
+sudo mv kustomize /usr/local/bin/
 ```
 
 4. Conversor de docker-compose para kubernets
